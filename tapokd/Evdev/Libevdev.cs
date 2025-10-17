@@ -178,10 +178,10 @@ namespace tapokd.Evdev
         internal static partial int UinputGetFd(nint uinput_dev);
 
         [LibraryImport("libevdev.so.2", EntryPoint = "libevdev_uinput_get_syspath", StringMarshalling = StringMarshalling.Utf8, SetLastError = true)]
-        internal static partial string UinputGetSysPath(nint uinput_dev);
+        internal static partial string? UinputGetSysPath(nint uinput_dev);
 
         [LibraryImport("libevdev.so.2", EntryPoint = "libevdev_uinput_get_devnode", StringMarshalling = StringMarshalling.Utf8, SetLastError = true)]
-        internal static partial string UinputGetDevnode(nint uinput_dev);
+        internal static partial string? UinputGetDevnode(nint uinput_dev);
 
         [LibraryImport("libevdev.so.2", EntryPoint = "libevdev_uinput_write_event", SetLastError = true)]
         internal static partial int UinputWriteEvent(nint uinput_dev, uint type, uint code, int value);

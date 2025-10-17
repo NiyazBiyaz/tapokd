@@ -1,69 +1,76 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Mono.Unix.Native;
 
 namespace tapokd.Evdev
 {
-    public class Device : LibEvdev, IDisposable
+    public abstract class BaseDevice : LibEvdev, IDisposable
     {
-        private readonly nint dev;
-        private SafeFileDescriptor fileDescriptor = null!;
+        protected readonly nint Dev;
+        private SafeFileDescriptor fileDescriptorHandle = null!;
 
         /// <summary>
-        /// Create new device and create <see cref="FileDescriptor"/> manually.
+        /// Create new device and create <see cref="FileDescriptorHandle"/> manually.
         /// </summary>
-        public Device()
+        public BaseDevice()
         {
-            dev = New();
+            Dev = New();
         }
 
         /// <summary>
-        /// Create <see cref="Device"/> instance from path.
+        /// Create <see cref="BaseDevice"/> instance from path.
         /// </summary>
         /// <param name="path"><c>/dev/input/eventX</c> like path.</param>
         /// <param name="flags">Open flags.</param>
         /// <param name="mode">New file permissions if <see cref="OpenFlags.O_CREAT"/> in <paramref name="flags"/> and file doesn't exists.</param>
-        public Device(string path, OpenFlags flags, FilePermissions? mode = null)
+        [SetsRequiredMembers]
+        public BaseDevice(string path, OpenFlags flags, FilePermissions? mode = null)
         {
-            dev = New();
-            FileDescriptor = new SafeFileDescriptor(path, flags, mode);
+            Dev = New();
+            FileDescriptorHandle = new SafeFileDescriptor(path, flags, mode);
         }
 
         /// <summary>
-        /// OS file descriptor of opened device. Automatically closes on dispose.
+        /// <see cref="SafeHandle"/> of <see cref="FileDescriptor"/>.
         /// </summary>
-        public required SafeFileDescriptor FileDescriptor
+        public required SafeFileDescriptor FileDescriptorHandle
         {
-            get => fileDescriptor;
+            get => fileDescriptorHandle;
             set
             {
                 int fd = (int)value.DangerousGetHandle();
 
                 int err;
-                if (fileDescriptor is null)
-                    err = SetFd(dev, fd);
+                if (fileDescriptorHandle is null)
+                    err = SetFd(Dev, fd);
                 else
-                    err = ChangeFd(dev, fd);
+                    err = ChangeFd(Dev, fd);
 
                 if (err != 0)
                     throw new ExternalException(Marshal.GetLastPInvokeErrorMessage(), Marshal.GetLastPInvokeError());
 
-                Debug.Assert(GetFd(dev) == fd);
+                Debug.Assert(GetFd(Dev) == fd);
 
-                fileDescriptor = value;
+                fileDescriptorHandle = value;
             }
         }
+
+        /// <summary>
+        /// File descriptor of the opened device.
+        /// </summary>
+        public int FileDescriptor => (int)FileDescriptorHandle.DangerousGetHandle();
 
         /// <summary>
         /// Device name.
         /// </summary>
         public string Name
         {
-            get => GetName(dev);
+            get => GetName(Dev);
             set
             {
                 ArgumentNullException.ThrowIfNull(value);
-                SetName(dev, value);
+                SetName(Dev, value);
             }
         }
 
@@ -72,11 +79,11 @@ namespace tapokd.Evdev
         /// </summary>
         public string Phys
         {
-            get => GetPhys(dev);
+            get => GetPhys(Dev);
             set
             {
                 ArgumentNullException.ThrowIfNull(value);
-                SetPhys(dev, value);
+                SetPhys(Dev, value);
             }
         }
 
@@ -85,18 +92,18 @@ namespace tapokd.Evdev
         /// </summary>
         public string Uniq
         {
-            get => GetUniq(dev);
+            get => GetUniq(Dev);
             set
             {
                 ArgumentNullException.ThrowIfNull(value);
-                SetUniq(dev, value);
+                SetUniq(Dev, value);
             }
         }
 
         /// <summary>
         /// Device driver version.
         /// </summary>
-        public int DriverVersion => GetDriverVersion(dev);
+        public int DriverVersion => GetDriverVersion(Dev);
 
         /// <summary>
         /// Combined representation of the device id properties as dictionary.
@@ -115,10 +122,10 @@ namespace tapokd.Evdev
         {
             get
             {
-                int bus = GetIdBustype(dev);
-                int vdr = GetIdVendor(dev);
-                int pro = GetIdProduct(dev);
-                int ver = GetIdVersion(dev);
+                int bus = GetIdBustype(Dev);
+                int vdr = GetIdVendor(Dev);
+                int pro = GetIdProduct(Dev);
+                int ver = GetIdVersion(Dev);
                 return new()
                 {
                     { IdProperty.Bustype, bus },
@@ -130,13 +137,13 @@ namespace tapokd.Evdev
             set
             {
                 if (value.TryGetValue(IdProperty.Bustype, out int bus))
-                    SetIdBustype(dev, bus);
+                    SetIdBustype(Dev, bus);
                 if (value.TryGetValue(IdProperty.Vendor, out int vdr))
-                    SetIdVendor(dev, vdr);
+                    SetIdVendor(Dev, vdr);
                 if (value.TryGetValue(IdProperty.Product, out int pro))
-                    SetIdProduct(dev, pro);
+                    SetIdProduct(Dev, pro);
                 if (value.TryGetValue(IdProperty.Version, out int ver))
-                    SetIdVersion(dev, ver);
+                    SetIdVersion(Dev, ver);
             }
         }
 
@@ -148,7 +155,7 @@ namespace tapokd.Evdev
         /// <exception cref="ExternalException">If the device wasn't successfully grabbed.</exception>
         public void Grab(GrabMode mode)
         {
-            int errno = Grab(dev, mode);
+            int errno = Grab(Dev, mode);
             if (errno != 0)
                 throw new AutoExternalException(errno);
         }
@@ -233,7 +240,7 @@ namespace tapokd.Evdev
         /// <param name="type">Event type value.</param>
         /// <param name="code">Event code value.</param>
         /// <returns><see langword="true"/> if device supports event, otherwise <see langword="false"/>.</returns>
-        public bool HasEvent(uint type, uint? code = null) => HasEventType(dev, type) == 1 && (code is null || HasEventCode(dev, type, (uint)code) == 1);
+        public bool HasEvent(uint type, uint? code = null) => HasEventType(Dev, type) == 1 && (code is null || HasEventCode(Dev, type, (uint)code) == 1);
 
         /// <inheritdoc cref="HasEvent"/>
         /// <param name="typeName">Event type name.</param>
@@ -249,9 +256,9 @@ namespace tapokd.Evdev
         {
             int res;
             if (code is null)
-                res = EnableEventType(dev, type);
+                res = EnableEventType(Dev, type);
             else
-                res = EnableEventCode(dev, type, (uint)code);
+                res = EnableEventCode(Dev, type, (uint)code);
 
             if (res != 0)
                 throw new AutoExternalException();
@@ -268,35 +275,12 @@ namespace tapokd.Evdev
         {
             int res;
             if (code is null)
-                res = DisableEventType(dev, type);
+                res = DisableEventType(Dev, type);
             else
-                res = DisableEventCode(dev, type, (uint)code);
+                res = DisableEventCode(Dev, type, (uint)code);
 
             if (res != 0)
                 throw new AutoExternalException();
-        }
-
-        public void SetLed(uint led, LedValue value)
-        {
-            int res = KernelSetLedValue(dev, led, value);
-            if (res < 0)
-                throw new AutoExternalException();
-        }
-
-        public void SetLed(string led, LedValue value)
-        {
-            SetLed(GetEventCodeByName("EV_LED", led), value);
-        }
-
-        internal InputEvent? NextEvent(ReadFlag flags)
-        {
-            InputEvent ev = default;
-            ReadStatus res = NextEvent(dev, flags, ref ev);
-            if (res == ReadStatus.Again)
-                return null;
-            if (res < 0)
-                throw new AutoExternalException();
-            return ev;
         }
 
         public void Disable(string typeName, string? codeName = null)
@@ -306,10 +290,22 @@ namespace tapokd.Evdev
             Disable(type, codeName is null ? null : GetEventCodeByName(type, codeName));
         }
 
+        public void SetLed(uint led, LedValue value)
+        {
+            int res = KernelSetLedValue(Dev, led, value);
+            if (res < 0)
+                throw new AutoExternalException();
+        }
+
+        public void SetLed(string led, LedValue value)
+        {
+            SetLed(GetEventCodeByName("EV_LED", led), value);
+        }
+
         public void Dispose()
         {
-            Free(dev);
-            FileDescriptor.Dispose();
+            Free(Dev);
+            FileDescriptorHandle.Dispose();
             GC.SuppressFinalize(this);
         }
     }

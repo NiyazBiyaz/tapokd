@@ -8,10 +8,10 @@ namespace tapokd.Evdev
     /// <param name="Seconds">Time value in <i>Unix time format</i> as 64-bit signed-integer</param>
     /// <param name="Microseconds">
     /// Time value in microseconds starting from the integer value of Unix-format.
-    /// Value range: <b>000 000 - 999 999</b>   
+    /// Value range: <b>000 000 - 999 999</b>
     /// </param>
     [StructLayout(LayoutKind.Sequential)]
-    internal readonly record struct TimeValue(
+    public readonly record struct TimeValue(
         long Seconds,
         long Microseconds
     );
