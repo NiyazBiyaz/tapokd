@@ -9,10 +9,16 @@ namespace tapokd.Evdev
         public SafeFileDescriptor(string path, OpenFlags openFlags, FilePermissions? filePermissions = null)
             : base(true)
         {
-            int fd = filePermissions != null ? Syscall.open(path, openFlags, (FilePermissions)filePermissions) : Syscall.open(path, openFlags);
+            int fd = filePermissions is not null ? Syscall.open(path, openFlags, (FilePermissions)filePermissions) : Syscall.open(path, openFlags);
             if (fd < 0)
                 throw new UnixIOException(Stdlib.GetLastError());
             SetHandle(fd);
+        }
+
+        public SafeFileDescriptor(int fileDescriptor)
+            : base(true)
+        {
+            SetHandle(fileDescriptor);
         }
 
         protected override bool ReleaseHandle()

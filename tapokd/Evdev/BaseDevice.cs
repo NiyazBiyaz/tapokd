@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Mono.Unix.Native;
 
@@ -10,12 +9,10 @@ namespace tapokd.Evdev
         protected readonly nint Dev;
         private SafeFileDescriptor fileDescriptorHandle = null!;
 
-        /// <summary>
-        /// Create new device and create <see cref="FileDescriptorHandle"/> manually.
-        /// </summary>
-        public BaseDevice()
+        public BaseDevice(int fileDescriptor)
         {
             Dev = New();
+            SetFileDescriptor(new SafeFileDescriptor(fileDescriptor));
         }
 
         /// <summary>
@@ -24,42 +21,39 @@ namespace tapokd.Evdev
         /// <param name="path"><c>/dev/input/eventX</c> like path.</param>
         /// <param name="flags">Open flags.</param>
         /// <param name="mode">New file permissions if <see cref="OpenFlags.O_CREAT"/> in <paramref name="flags"/> and file doesn't exists.</param>
-        [SetsRequiredMembers]
         public BaseDevice(string path, OpenFlags flags, FilePermissions? mode = null)
         {
             Dev = New();
-            FileDescriptorHandle = new SafeFileDescriptor(path, flags, mode);
+            SetFileDescriptor(new SafeFileDescriptor(path, flags, mode));
         }
 
-        /// <summary>
-        /// <see cref="SafeHandle"/> of <see cref="FileDescriptor"/>.
-        /// </summary>
-        public required SafeFileDescriptor FileDescriptorHandle
+        protected BaseDevice()
         {
-            get => fileDescriptorHandle;
-            set
-            {
-                int fd = (int)value.DangerousGetHandle();
+            Dev = New();
+        }
 
-                int err;
-                if (fileDescriptorHandle is null)
-                    err = SetFd(Dev, fd);
-                else
-                    err = ChangeFd(Dev, fd);
+        protected void SetFileDescriptor(SafeFileDescriptor fileDescriptor)
+        {
+            int fd = (int)fileDescriptor.DangerousGetHandle();
 
-                if (err != 0)
-                    throw new ExternalException(Marshal.GetLastPInvokeErrorMessage(), Marshal.GetLastPInvokeError());
+            int err;
+            if (fileDescriptorHandle is null)
+                err = SetFd(Dev, fd);
+            else
+                err = ChangeFd(Dev, fd);
 
-                Debug.Assert(GetFd(Dev) == fd);
+            if (err != 0)
+                throw new ExternalException(Marshal.GetLastPInvokeErrorMessage(), Marshal.GetLastPInvokeError());
 
-                fileDescriptorHandle = value;
-            }
+            Debug.Assert(GetFd(Dev) == fd);
+
+            fileDescriptorHandle = fileDescriptor;
         }
 
         /// <summary>
         /// File descriptor of the opened device.
         /// </summary>
-        public int FileDescriptor => (int)FileDescriptorHandle.DangerousGetHandle();
+        public int FileDescriptor => (int)fileDescriptorHandle.DangerousGetHandle();
 
         /// <summary>
         /// Device name.
@@ -302,10 +296,10 @@ namespace tapokd.Evdev
             SetLed(GetEventCodeByName("EV_LED", led), value);
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             Free(Dev);
-            FileDescriptorHandle.Dispose();
+            fileDescriptorHandle.Dispose();
             GC.SuppressFinalize(this);
         }
     }

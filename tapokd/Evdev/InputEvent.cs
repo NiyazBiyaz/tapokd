@@ -12,5 +12,14 @@ namespace tapokd.Evdev
     [StructLayout(LayoutKind.Sequential)]
     public readonly record struct InputEvent(TimeValue TimeValue, ushort Type, ushort Code, int Value)
     {
+        public InputEvent(ushort type, ushort code, int value)
+            : this(default, type, code, value)
+        {
+        }
+
+        public InputEvent(EventType type, ushort code, int value)
+            : this((ushort)type, code, value)
+        {
+        }
     }
 }

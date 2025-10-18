@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Mono.Unix.Native;
 using Serilog;
@@ -7,13 +6,12 @@ namespace tapokd.Evdev
 {
     public class ReadableDevice : BaseDevice
     {
-        [SetsRequiredMembers]
         public ReadableDevice(string path)
             : base(path, OpenFlags.O_RDONLY | OpenFlags.O_NONBLOCK)
         {
         }
 
-        public async IAsyncEnumerable<InputEvent> ReadInputEventsAsync(int updatePeriod = 1000, [EnumeratorCancellation] CancellationToken token = default)
+        public async IAsyncEnumerable<InputEvent> ReadInputEventsAsync(EventType[] allowedTypes, int updatePeriod = 1000, [EnumeratorCancellation] CancellationToken token = default)
         {
             Pollfd[] pollfds = [new Pollfd() { fd = FileDescriptor, events = PollEvents.POLLIN }];
             InputEvent inputEvent = default;
@@ -30,7 +28,7 @@ namespace tapokd.Evdev
                 while (!stop)
                 {
                     res = NextEvent(Dev, flag, ref inputEvent);
-                    Log.Debug("Result = {Result}.", res);
+                    Log.Verbose("Event reading result = {Result}.", res);
 
                     if (res == ReadStatus.Sync)
                     {
@@ -48,7 +46,11 @@ namespace tapokd.Evdev
                     else if ((int)res < 0 && res != ReadStatus.Again)
                         throw new AutoExternalException((int)res);
 
-                    yield return inputEvent;
+                    if (allowedTypes.Contains((EventType)inputEvent.Type))
+                    {
+                        Log.Debug("Received event: {InputEvent}", inputEvent);
+                        yield return inputEvent;
+                    }
                 }
             }
             token.ThrowIfCancellationRequested();
