@@ -7,25 +7,6 @@ namespace tapokd.Evdev
     {
         private readonly nint uiDev;
 
-        public WritableDevice(string name, IDictionary<uint, uint[]> eventTypesAndCodes, Dictionary<IdProperty, int> idPropertyValues)
-            : base()
-        {
-            SetName(Dev, name);
-            foreach (uint type in eventTypesAndCodes.Keys)
-            {
-                EnableEventType(Dev, type);
-                foreach (uint code in eventTypesAndCodes[type])
-                {
-                    EnableEventCode(Dev, type, code);
-                }
-            }
-            Id = idPropertyValues;
-
-            int err = UinputCreateFromDevice(Dev, (int)UinputOpenMode.Managed, ref uiDev);
-            if (err != 0)
-                throw AutoExternalException.Throw(err);
-        }
-
         public WritableDevice(string path)
         {
             SetFileDescriptor(new SafeFileDescriptor(path, OpenFlags.O_RDWR | OpenFlags.O_NONBLOCK));
