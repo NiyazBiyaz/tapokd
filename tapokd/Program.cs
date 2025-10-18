@@ -10,19 +10,20 @@ namespace tapokd
         {
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console(
-                    outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"
+                    outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u5}] {Message:lj}{NewLine}{Exception}"
                 )
                 .MinimumLevel.Verbose()
                 .CreateLogger();
 
-            if (arguments.Length != 2)
+            if (arguments.Length != 3)
             {
                 Console.WriteLine("o_O");
                 return;
             }
 
-            string readPath = arguments.First();
-            string writePath = arguments.Last();
+            string readPath = arguments[0];
+            string writePath = arguments[1];
+            int.TryParse(arguments[2], out int speed);
 
             ReadableDevice device = new(readPath);
             WritableDevice uiDevice = new(writePath);
@@ -49,19 +50,19 @@ namespace tapokd
                             {
                                 // up
                                 case 103:
-                                    uiDevice.WriteEvents([new InputEvent(EventType.Relative, 0x01, -2)]);
+                                    uiDevice.WriteEvents([new InputEvent(EventType.Relative, 0x01, -speed)]);
                                     break;
                                 // down
                                 case 108:
-                                    uiDevice.WriteEvents([new InputEvent(EventType.Relative, 0x01, 2)]);
+                                    uiDevice.WriteEvents([new InputEvent(EventType.Relative, 0x01, speed)]);
                                     break;
                                 // left
                                 case 105:
-                                    uiDevice.WriteEvents([new InputEvent(EventType.Relative, 0x00, -2)]);
+                                    uiDevice.WriteEvents([new InputEvent(EventType.Relative, 0x00, -speed)]);
                                     break;
                                 // right
                                 case 106:
-                                    uiDevice.WriteEvents([new InputEvent(EventType.Relative, 0x00, 2)]);
+                                    uiDevice.WriteEvents([new InputEvent(EventType.Relative, 0x00, speed)]);
                                     break;
                             }
                     }

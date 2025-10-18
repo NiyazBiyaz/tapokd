@@ -23,7 +23,7 @@ namespace tapokd.Evdev
             {
                 flag = ReadFlag.Normal;
                 await waitForPollAsync(pollfds, updatePeriod, token).ConfigureAwait(false);
-                Log.Debug("Can read events.");
+                Log.Verbose("Can read events.");
                 bool stop = false;
                 while (!stop)
                 {
@@ -38,7 +38,7 @@ namespace tapokd.Evdev
 
                     else if (res == ReadStatus.Again)
                     {
-                        Log.Debug("No events to read.");
+                        Log.Verbose("No events to read.");
                         stop = true;
                         continue;
                     }
