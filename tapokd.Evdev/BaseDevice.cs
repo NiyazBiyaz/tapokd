@@ -151,7 +151,7 @@ namespace tapokd.Evdev
         {
             int errno = Grab(Dev, mode);
             if (errno != 0)
-                throw new AutoExternalException(errno);
+                throw AutoExternalException.Throw(errno);
         }
 
         /// <summary>
@@ -160,7 +160,7 @@ namespace tapokd.Evdev
         /// <param name="type">Event type value</param>
         /// <returns>Type name as string</returns>
         /// <exception cref="ExternalException">If received event type is invalid</exception>
-        public static string GetEventTypeName(uint type) => EventTypeGetName(type) ?? throw new AutoExternalException();
+        public static string GetEventTypeName(uint type) => EventTypeGetName(type) ?? throw AutoExternalException.Throw();
         /// <summary>
         /// Get event code name by its value & type value.
         /// </summary>
@@ -168,7 +168,7 @@ namespace tapokd.Evdev
         /// <param name="code">Value of event code</param>
         /// <returns>Code name as string</returns>
         /// <exception cref="ExternalException">If received event code is invalid</exception>
-        public static string GetEventCodeName(uint type, uint code) => EventCodeGetName(type, code) ?? throw new AutoExternalException();
+        public static string GetEventCodeName(uint type, uint code) => EventCodeGetName(type, code) ?? throw AutoExternalException.Throw();
 
         /// <summary>
         /// Get event type value by its name.
@@ -182,7 +182,7 @@ namespace tapokd.Evdev
             nuint len = (nuint)typeName.Length;
             int res = EventTypeFromNameN(typeName, len);
             if (res < 0)
-                throw new AutoExternalException();
+                throw AutoExternalException.Throw();
             return (uint)res;
         }
 
@@ -198,7 +198,7 @@ namespace tapokd.Evdev
             nuint len = (nuint)codeName.Length;
             int res = EventTypeFromCodeNameN(codeName, len);
             if (res < 0)
-                throw new AutoExternalException();
+                throw AutoExternalException.Throw();
             return (uint)res;
         }
 
@@ -215,7 +215,7 @@ namespace tapokd.Evdev
             nuint len = (nuint)codeName.Length;
             int res = EventCodeFromNameN(type, codeName, len);
             if (res < 0)
-                throw new AutoExternalException();
+                throw AutoExternalException.Throw();
             return (uint)res;
         }
 
@@ -255,7 +255,7 @@ namespace tapokd.Evdev
                 res = EnableEventCode(Dev, type, (uint)code);
 
             if (res != 0)
-                throw new AutoExternalException();
+                throw AutoExternalException.Throw();
         }
 
         public void Enable(string typeName, string? codeName = null)
@@ -274,7 +274,7 @@ namespace tapokd.Evdev
                 res = DisableEventCode(Dev, type, (uint)code);
 
             if (res != 0)
-                throw new AutoExternalException();
+                throw AutoExternalException.Throw();
         }
 
         public void Disable(string typeName, string? codeName = null)
@@ -288,7 +288,7 @@ namespace tapokd.Evdev
         {
             int res = KernelSetLedValue(Dev, led, value);
             if (res < 0)
-                throw new AutoExternalException();
+                throw AutoExternalException.Throw();
         }
 
         public void SetLed(string led, LedValue value)

@@ -23,7 +23,7 @@ namespace tapokd.Evdev
 
             int err = UinputCreateFromDevice(Dev, (int)UinputOpenMode.Managed, ref uiDev);
             if (err != 0)
-                throw new AutoExternalException(err);
+                throw AutoExternalException.Throw(err);
         }
 
         public WritableDevice(string path)
@@ -32,7 +32,7 @@ namespace tapokd.Evdev
 
             int err = UinputCreateFromDevice(Dev, (int)UinputOpenMode.Managed, ref uiDev);
             if (err != 0)
-                throw new AutoExternalException(err);
+                throw AutoExternalException.Throw(err);
         }
 
         public void WriteEvents(InputEvent[] inputEvents, bool strict = true)
@@ -46,7 +46,7 @@ namespace tapokd.Evdev
                 err = UinputWriteEvent(uiDev, evt.Type, evt.Code, evt.Value);
                 if (err < 0)
                     if (strict)
-                        throw new AutoExternalException(-err);
+                        throw AutoExternalException.Throw(-err);
                     else
                         Log.Error("Error has been occurred: {ErrorCode}", err);
             }

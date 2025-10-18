@@ -166,7 +166,7 @@ namespace tapokd.Evdev
 
         #endregion
 
-        #region Uinput device creation
+        #region UInput
 
         [LibraryImport("libevdev.so.2", EntryPoint = "libevdev_uinput_create_from_device", SetLastError = true)]
         internal static partial int UinputCreateFromDevice(nint dev, int uinput_fd, ref nint uinput_dev);

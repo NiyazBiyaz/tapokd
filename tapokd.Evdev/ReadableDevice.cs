@@ -44,7 +44,7 @@ namespace tapokd.Evdev
                     }
 
                     else if ((int)res < 0 && res != ReadStatus.Again)
-                        throw new AutoExternalException((int)res);
+                        throw AutoExternalException.Throw((int)res);
 
                     if (allowedTypes.Contains((EventType)inputEvent.Type))
                     {
@@ -68,7 +68,7 @@ namespace tapokd.Evdev
                     else if (res == 0)
                         continue;
                     else
-                        throw new AutoExternalException();
+                        throw AutoExternalException.Throw();
                 }
                 token.ThrowIfCancellationRequested();
             }, token);

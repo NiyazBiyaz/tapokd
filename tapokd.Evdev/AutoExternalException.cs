@@ -5,16 +5,10 @@ namespace tapokd.Evdev
     /// <summary>
     /// <see cref="ExternalException"/> with automatic insertion of <see cref="Marshal.GetLastPInvokeErrorMessage"/> and <see cref="Marshal.GetLastPInvokeError"/>
     /// </summary>
-    public sealed class AutoExternalException : ExternalException
+    public static class AutoExternalException
     {
-        public AutoExternalException()
-            : base(Marshal.GetLastPInvokeErrorMessage(), Marshal.GetLastPInvokeError())
-        {
-        }
+        public static ExternalException Throw() => new(Marshal.GetLastPInvokeErrorMessage(), Marshal.GetLastPInvokeError());
 
-        public AutoExternalException(int errorCode)
-            : base(Marshal.GetLastPInvokeErrorMessage(), errorCode)
-        {
-        }
+        public static ExternalException Throw(int errorCode) => new(Marshal.GetLastPInvokeErrorMessage(), errorCode);
     }
 }
